@@ -51,6 +51,18 @@ func getAllTodos(store: Request, arguments: NoArguments) throws -> EventLoopFutu
 }
 ```
 
+#### Enums
+It automatically resolves all cases of an enum if the type conforms to `CaseIterable`. 
+```swift
+enum TodoState: String, CaseIterable {
+    case open
+    case done
+    case forLater
+}
+
+Enum(TodoState.self),
+```
+
 ### Register the schema on the router
 In your configure.swift file call the `register(graphQLSchema: <#T##Schema<FieldKeyProvider, Request>#>, withResolver: <#T##FieldKeyProvider#>)`. By default this registers the GET and POST endpoints at `/graphql`. But you can also pass the optional parameter `at:` and override the default value.
 
