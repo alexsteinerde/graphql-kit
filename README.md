@@ -1,7 +1,7 @@
 # GraphQLKit
 [![Language](https://img.shields.io/badge/Swift-5.1-brightgreen.svg)](http://swift.org)
 [![Vapor Version](https://img.shields.io/badge/Vapor-3-F6CBCA.svg)](http://vapor.codes)
-[![CircleCI](https://circleci.com/gh/alexsteinerde/graphql-kit.svg?style=shield)](https://circleci.com/gh/alexsteinerde/graphql-kit)
+[![build](https://github.com/alexsteinerde/graphql-kit/workflows/build/badge.svg)](https://github.com/alexsteinerde/graphql-kit/actions)
 
 
 Easy setup of a GraphQL server with Vapor. It uses the GraphQL implementation of [Graphiti](https://github.com/alexsteinerde/Graphiti).
