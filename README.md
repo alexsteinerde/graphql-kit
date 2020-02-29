@@ -63,6 +63,27 @@ enum TodoState: String, CaseIterable {
 Enum(TodoState.self),
 ```
 
+#### `Parent` and `Children`
+Vapor has the functionality to fetch an objects parent and children automatically with `Parent` and `Children` types. To integrate this into GraphQL, GraphQLKit provides extensions to the `Field` type that lets you use the parent or children property as a keypath. The fetching of those related objects is then done automatically.
+
+> :warning: Loading related objects in GraphQL has the [**N+1** problem](https://itnext.io/what-is-the-n-1-problem-in-graphql-dd4921cb3c1a). A solution would be to build a DataLoader package for Swift. But this hasn't been done yet.
+
+```swift
+final class User {
+    ...
+    var userId: UUID
+    var user: Parent<Post, User> {
+        parent(\.userId)
+    }
+    ...
+}
+```
+
+```swift
+// Schema type: 
+Field(.user, with: \.user),
+```
+
 ### Register the schema on the router
 In your configure.swift file call the `register(graphQLSchema: <#T##Schema<FieldKeyProvider, Request>#>, withResolver: <#T##FieldKeyProvider#>)`. By default this registers the GET and POST endpoints at `/graphql`. But you can also pass the optional parameter `at:` and override the default value.
 

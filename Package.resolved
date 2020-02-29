@@ -47,6 +47,15 @@
         }
       },
       {
+        "package": "Fluent",
+        "repositoryURL": "https://github.com/vapor/fluent.git",
+        "state": {
+          "branch": null,
+          "revision": "783819d8838d15e1a05b459aa0fd1bde1e37ac26",
+          "version": "3.2.1"
+        }
+      },
+      {
         "package": "Graphiti",
         "repositoryURL": "https://github.com/alexsteinerde/Graphiti.git",
         "state": {
@@ -107,6 +116,15 @@
           "branch": null,
           "revision": "fa5b5de62bd68bcde9a69933f31319e46c7275fb",
           "version": "1.0.2"
+        }
+      },
+      {
+        "package": "SQL",
+        "repositoryURL": "https://github.com/vapor/sql.git",
+        "state": {
+          "branch": null,
+          "revision": "50eaeb8f52a1ce63f1ff3880e1114dd8757a78a6",
+          "version": "2.3.2"
         }
       },
       {
