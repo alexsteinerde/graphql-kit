@@ -1,5 +1,6 @@
 import XCTest
 import Vapor
+import XCTVapor
 @testable import GraphQLKit
 
 final class GraphQLKitTests: XCTestCase {
@@ -35,33 +36,32 @@ final class GraphQLKitTests: XCTestCase {
         let queryRequest = QueryRequest(query: query, operationName: nil, variables: nil)
         let data = String(data: try! JSONEncoder().encode(queryRequest), encoding: .utf8)!
 
-        let app = try! Application.testable()
-        try! app.make(Router.self).register(graphQLSchema: schema, withResolver: Resolver())
-        let responder = try! app.make(Responder.self)
-         // 2
-        let request = HTTPRequest(method: .POST, url: URL(string: "/graphql")!, headers: HTTPHeaders([("Content-Type", "application/json")]), body: data)
-         let wrappedRequest = Request(http: request, using: app)
+        let app = Application(.testing)
+        defer { app.shutdown() }
 
-        let response = try! responder.respond(to: wrappedRequest).wait()
-        let status = response.http
+        app.register(graphQLSchema: schema, withResolver: Resolver())
 
-        XCTAssertEqual(status.status, HTTPResponseStatus.ok)
-        XCTAssertEqual(status.body.description, #"{"data":{"test":"Hello World"}}"#)
+        var body = ByteBufferAllocator().buffer(capacity: 0)
+        body.writeString(data)
+        var headers = HTTPHeaders()
+        headers.replaceOrAdd(name: .contentLength, value: body.readableBytes.description)
+        headers.contentType = .json
+
+        try app.testable().test(.POST, "/graphql", headers: headers, body: body) { res in
+            XCTAssertEqual(res.status, HTTPResponseStatus.ok)
+            XCTAssertEqual(res.body.description, #"{"data":{"test":"Hello World"}}"#)
+        }
     }
 
     func testGetEndpoint() throws {
-        let app = try! Application.testable()
-        try! app.make(Router.self).register(graphQLSchema: schema, withResolver: Resolver())
-        let responder = try! app.make(Responder.self)
-         // 2
-        let request = HTTPRequest(method: .GET, url: URL(string: "/graphql?query=\(query.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!)")!)
-         let wrappedRequest = Request(http: request, using: app)
+        let app = Application(.testing)
+        defer { app.shutdown() }
 
-        let response = try! responder.respond(to: wrappedRequest).wait()
-        let status = response.http
-
-        XCTAssertEqual(status.status, HTTPResponseStatus.ok)
-        XCTAssertEqual(status.body.description, #"{"data":{"test":"Hello World"}}"#)
+        app.register(graphQLSchema: schema, withResolver: Resolver())
+        try app.testable().test(.GET, "/graphql?query=\(query.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!)") { res in
+            XCTAssertEqual(res.status, HTTPResponseStatus.ok)
+            XCTAssertEqual(res.body.description, #"{"data":{"test":"Hello World"}}"#)
+        }
     }
 
     func testPostOperatinName() throws {
@@ -77,18 +77,21 @@ query Number {
         let queryRequest = QueryRequest(query: multiQuery, operationName: "Number", variables: nil)
         let data = String(data: try! JSONEncoder().encode(queryRequest), encoding: .utf8)!
 
-        let app = try! Application.testable()
-        try! app.make(Router.self).register(graphQLSchema: schema, withResolver: Resolver())
-        let responder = try! app.make(Responder.self)
-         // 2
-        let request = HTTPRequest(method: .POST, url: URL(string: "/graphql")!, headers: HTTPHeaders([("Content-Type", "application/json")]), body: data)
-         let wrappedRequest = Request(http: request, using: app)
+        let app = Application(.testing)
+        defer { app.shutdown() }
 
-        let response = try! responder.respond(to: wrappedRequest).wait()
-        let status = response.http
+        app.register(graphQLSchema: schema, withResolver: Resolver())
 
-        XCTAssertEqual(status.status, HTTPResponseStatus.ok)
-        XCTAssertEqual(status.body.description, #"{"data":{"number":42}}"#)
+        var body = ByteBufferAllocator().buffer(capacity: 0)
+        body.writeString(data)
+        var headers = HTTPHeaders()
+        headers.replaceOrAdd(name: .contentLength, value: body.readableBytes.description)
+        headers.contentType = .json
+
+        try app.testable().test(.POST, "/graphql", headers: headers, body: body) { res in
+            XCTAssertEqual(res.status, HTTPResponseStatus.ok)
+            XCTAssertEqual(res.body.description, #"{"data":{"number":42}}"#)
+        }
     }
 
     static let allTests = [
@@ -96,20 +99,4 @@ query Number {
         ("testGetEndpoint", testGetEndpoint),
         ("testPostOperatinName", testPostOperatinName),
     ]
-}
-
-extension Application {
-  static func testable(envArgs: [String]? = nil) throws -> Application {
-    let config = Config.default()
-    let services = Services.default()
-    var env = Environment.testing
-
-    if let environmentArgs = envArgs {
-      env.arguments = environmentArgs
-    }
-    let app = try Application(config: config, environment: env, services: services)
-
-
-    return app
-  }
 }

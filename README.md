@@ -1,6 +1,6 @@
 # GraphQLKit
 [![Language](https://img.shields.io/badge/Swift-5.1-brightgreen.svg)](http://swift.org)
-[![Vapor Version](https://img.shields.io/badge/Vapor-3-F6CBCA.svg)](http://vapor.codes)
+[![Vapor Version](https://img.shields.io/badge/Vapor-4-F6CBCA.svg)](http://vapor.codes)
 [![build](https://github.com/alexsteinerde/graphql-kit/workflows/build/badge.svg)](https://github.com/alexsteinerde/graphql-kit/actions)
 
 
@@ -24,7 +24,7 @@ let package = Package(
     .package(url: "https://github.com/alexsteinerde/graphql-kit.git", from: "1.0.0"),
     ],
     targets: [
-    .target(name: "App", dependencies: [<#T##Other Dependencies#>, "GraphQLKit"]),
+    .target(name: "App", dependencies: ["GraphQLKit"]),
     ...
     ]
 )
@@ -84,16 +84,12 @@ final class User {
 Field(.user, with: \.user),
 ```
 
-### Register the schema on the router
-In your configure.swift file call the `register(graphQLSchema: <#T##Schema<FieldKeyProvider, Request>#>, withResolver: <#T##FieldKeyProvider#>)`. By default this registers the GET and POST endpoints at `/graphql`. But you can also pass the optional parameter `at:` and override the default value.
+### Register the schema on the application
+In your configure.swift file call the `register(graphQLSchema: <#T##Schema<FieldKeyProvider, Request>#>, withResolver: <#T##FieldKeyProvider#>)` on your `Application` instance. By default this registers the GET and POST endpoints at `/graphql`. But you can also pass the optional parameter `at:` and override the default value.
 
 ```Swift
-let router = EngineRouter.default()
-
 // Register the schema and it's resolver.
-router.register(graphQLSchema: todoSchema, withResolver: TodoAPI())
-
-services.register(router, as: Router.self)
+app.register(graphQLSchema: todoSchema, withResolver: TodoAPI())
 ```
 
 ## License

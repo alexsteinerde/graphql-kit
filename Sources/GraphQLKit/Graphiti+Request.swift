@@ -3,11 +3,9 @@ import Graphiti
 
 extension Request {
     func resolveByBody<RootType: FieldKeyProvider>(graphQLSchema schema: Schema<RootType, Request>, with rootAPI: RootType) throws -> Future<String> {
-        try self.content
+        let queryRequest = try self.content
             .decode(QueryRequest.self)
-            .flatMap({ (data: QueryRequest) -> Future<String> in
-                self.resolve(byQueryRequest: data, graphQLSchema: schema, with: rootAPI)
-            })
+        return self.resolve(byQueryRequest: queryRequest, graphQLSchema: schema, with: rootAPI)
     }
 
     func resolveByQueryParameters<RootType: FieldKeyProvider>(graphQLSchema schema: Schema<RootType, Request>, with rootAPI: RootType) throws -> Future<String> {
