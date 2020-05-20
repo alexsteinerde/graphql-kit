@@ -234,5 +234,8 @@ final class GraphQLKitTests: XCTestCase {
         ("testPostEndpoint", testPostEndpoint),
         ("testGetEndpoint", testGetEndpoint),
         ("testPostOperatinName", testPostOperatinName),
+        ("testProtectedPostEndpoint", testPostEndpoint),
+        ("testProtectedGetEndpoint", testGetEndpoint),
+        ("testProtectedPostOperatinName", testPostOperatinName),
     ]
 }
