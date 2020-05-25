@@ -1,7 +1,8 @@
 import XCTest
 
-import vapor_graphitiTests
+import GraphQLKitTests
 
 var tests = [XCTestCaseEntry]()
-tests += GraphQLKitTests.allTests()
+tests += GraphQLKitTests.__allTests()
+
 XCTMain(tests)
