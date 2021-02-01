@@ -85,7 +85,7 @@ Field(.user, with: \.user),
 ```
 
 ### Register the schema on the application
-In your configure.swift file call the `register(graphQLSchema: <#T##Schema<FieldKeyProvider, Request>#>, withResolver: <#T##FieldKeyProvider#>)` on your `Application` instance. By default this registers the GET and POST endpoints at `/graphql`. But you can also pass the optional parameter `at:` and override the default value.
+In your `configure.swift` file call the `register(graphQLSchema: Schema<YourResolver, Request>, withResolver: YourResolver)` on your `Application` instance. By default this registers the GET and POST endpoints at `/graphql`. But you can also pass the optional parameter `at:` and override the default value.
 
 ```Swift
 // Register the schema and it's resolver.

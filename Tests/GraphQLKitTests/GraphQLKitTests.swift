@@ -7,32 +7,28 @@ final class GraphQLKitTests: XCTestCase {
     struct SomeBearerAuthenticator: BearerAuthenticator {
         struct User: Authenticatable {}
         
-        func authenticate(bearer: BearerAuthorization, for request: Request) -> EventLoopFuture<User?> {
+        func authenticate(bearer: BearerAuthorization, for request: Request) -> EventLoopFuture<()> {
             // Bearer token should be equal to `token` to pass the auth
             if bearer.token == "token" {
-                return request.eventLoop.makeSucceededFuture(User())
+                request.auth.login(User())
+                return request.eventLoop.makeSucceededFuture(())
             } else {
                 return request.eventLoop.makeFailedFuture(Abort(.unauthorized))
             }
         }
         
-        func authenticate(request: Request) -> EventLoopFuture<User?> {
+        func authenticate(request: Request) -> EventLoopFuture<()> {
             // Bearer token should be equal to `token` to pass the auth
             if request.headers.bearerAuthorization?.token == "token" {
-                return request.eventLoop.makeSucceededFuture(User())
+                request.auth.login(User())
+                return request.eventLoop.makeSucceededFuture(())
             } else {
                 return request.eventLoop.makeFailedFuture(Abort(.unauthorized))
             }
         }
     }
     
-    struct ProtectedResolver: FieldKeyProvider {
-        typealias FieldKey = FieldKeys
-
-        enum FieldKeys: String {
-            case test
-            case number
-        }
+    struct ProtectedResolver {
         func test(store: Request, _: NoArguments) throws -> String {
             _ = try store.auth.require(SomeBearerAuthenticator.User.self)
             return "Hello World"
@@ -44,13 +40,7 @@ final class GraphQLKitTests: XCTestCase {
         }
     }
     
-    struct Resolver: FieldKeyProvider {
-        typealias FieldKey = FieldKeys
-
-        enum FieldKeys: String {
-            case test
-            case number
-        }
+    struct Resolver {
         func test(store: Request, _: NoArguments) -> String {
             "Hello World"
         }
@@ -60,19 +50,19 @@ final class GraphQLKitTests: XCTestCase {
         }
     }
     
-    let protectedSchema = Schema<ProtectedResolver, Request>([
-        Query([
-            Field(.test, at: ProtectedResolver.test),
-            Field(.number, at: ProtectedResolver.number)
-        ])
-    ])
+    let protectedSchema = try! Schema<ProtectedResolver, Request> {
+        Query {
+            Field("test", at: ProtectedResolver.test)
+            Field("number", at: ProtectedResolver.number)
+        }
+    }
 
-    let schema = Schema<Resolver, Request>([
-        Query([
-            Field(.test, at: Resolver.test),
-            Field(.number, at: Resolver.number)
-        ])
-    ])
+    let schema = try! Schema<Resolver, Request> {
+        Query {
+            Field("test", at: Resolver.test)
+            Field("number", at: Resolver.number)
+        }
+    }
     
     let query = """
     query {
@@ -97,7 +87,9 @@ final class GraphQLKitTests: XCTestCase {
 
         try app.testable().test(.POST, "/graphql", headers: headers, body: body) { res in
             XCTAssertEqual(res.status, .ok)
-            XCTAssertEqual(res.body.description, #"{"data":{"test":"Hello World"}}"#)
+            var res = res
+            let expected = #"{"data":{"test":"Hello World"}}"#
+            XCTAssertEqual(res.body.readString(length: expected.count), expected)
         }
     }
 
@@ -108,7 +100,9 @@ final class GraphQLKitTests: XCTestCase {
         app.register(graphQLSchema: schema, withResolver: Resolver())
         try app.testable().test(.GET, "/graphql?query=\(query.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!)") { res in
             XCTAssertEqual(res.status, .ok)
-            XCTAssertEqual(res.body.description, #"{"data":{"test":"Hello World"}}"#)
+            var body = res.body
+            let expected = #"{"data":{"test":"Hello World"}}"#
+            XCTAssertEqual(body.readString(length: expected.count), expected)
         }
     }
     
@@ -138,7 +132,9 @@ final class GraphQLKitTests: XCTestCase {
 
         try app.testable().test(.POST, "/graphql", headers: headers, body: body) { res in
             XCTAssertEqual(res.status, .ok)
-            XCTAssertEqual(res.body.description, #"{"data":{"number":42}}"#)
+            var res = res
+            let expected = #"{"data":{"number":42}}"#
+            XCTAssertEqual(res.body.readString(length: expected.count), expected)
         }
     }
     
@@ -149,7 +145,7 @@ final class GraphQLKitTests: XCTestCase {
         let app = Application(.testing)
         defer { app.shutdown() }
 
-        let protected = app.grouped(SomeBearerAuthenticator().middleware())
+        let protected = app.grouped(SomeBearerAuthenticator())
         protected.register(graphQLSchema: protectedSchema, withResolver: ProtectedResolver())
 
         var body = ByteBufferAllocator().buffer(capacity: 0)
@@ -167,7 +163,9 @@ final class GraphQLKitTests: XCTestCase {
         
         try app.testable().test(.POST, "/graphql", headers: protectedHeaders, body: body) { res in
             XCTAssertEqual(res.status, .ok)
-            XCTAssertEqual(res.body.description, #"{"data":{"test":"Hello World"}}"#)
+            var res = res
+            let expected = #"{"data":{"test":"Hello World"}}"#
+            XCTAssertEqual(res.body.readString(length: expected.count), expected)
         }
     }
     
@@ -175,7 +173,7 @@ final class GraphQLKitTests: XCTestCase {
         let app = Application(.testing)
         defer { app.shutdown() }
         
-        let protected = app.grouped(SomeBearerAuthenticator().middleware())
+        let protected = app.grouped(SomeBearerAuthenticator())
         protected.register(graphQLSchema: protectedSchema, withResolver: ProtectedResolver())
         
         var headers = HTTPHeaders()
@@ -187,7 +185,9 @@ final class GraphQLKitTests: XCTestCase {
         
         try app.testable().test(.GET, "/graphql?query=\(query.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!)", headers: headers) { res in
             XCTAssertEqual(res.status, .ok)
-            XCTAssertEqual(res.body.description, #"{"data":{"test":"Hello World"}}"#)
+            var body = res.body
+            let expected = #"{"data":{"test":"Hello World"}}"#
+            XCTAssertEqual(body.readString(length: expected.count), expected)
         }
     }
     
@@ -207,7 +207,7 @@ final class GraphQLKitTests: XCTestCase {
         let app = Application(.testing)
         defer { app.shutdown() }
 
-        let protected = app.grouped(SomeBearerAuthenticator().middleware())
+        let protected = app.grouped(SomeBearerAuthenticator())
         protected.register(graphQLSchema: protectedSchema, withResolver: ProtectedResolver())
 
         var body = ByteBufferAllocator().buffer(capacity: 0)
@@ -226,16 +226,9 @@ final class GraphQLKitTests: XCTestCase {
 
         try app.testable().test(.POST, "/graphql", headers: protectedHeaders, body: body) { res in
             XCTAssertEqual(res.status, .ok)
-            XCTAssertEqual(res.body.description, #"{"data":{"number":42}}"#)
+            var res = res
+            let expected = #"{"data":{"number":42}}"#
+            XCTAssertEqual(res.body.readString(length: expected.count), expected)
         }
     }
-
-    static let allTests = [
-        ("testPostEndpoint", testPostEndpoint),
-        ("testGetEndpoint", testGetEndpoint),
-        ("testPostOperatinName", testPostOperatinName),
-        ("testProtectedPostEndpoint", testPostEndpoint),
-        ("testProtectedGetEndpoint", testGetEndpoint),
-        ("testProtectedPostOperatinName", testPostOperatinName),
-    ]
 }
