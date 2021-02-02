@@ -2,18 +2,18 @@ import Vapor
 import Graphiti
 import GraphQL
 
-extension Router {
-    public func register<RootType: FieldKeyProvider>(graphQLSchema schema: Schema<RootType, Request>, withResolver rootAPI: RootType, at path: String="graphql") {
+extension RoutesBuilder {
+    public func register<RootType>(graphQLSchema schema: Schema<RootType, Request>, withResolver rootAPI: RootType, at path: PathComponent="graphql") {
         self.post(path) { (request) -> EventLoopFuture<Response> in
             try request.resolveByBody(graphQLSchema: schema, with: rootAPI)
                 .map({ (responseContent) in
-                    request.response(responseContent, as: .json)
+                    Response(body: responseContent, mediaType: .json)
                 })
         }
         self.get(path) { (request) -> EventLoopFuture<Response> in
             try request.resolveByQueryParameters(graphQLSchema: schema, with: rootAPI)
                 .map({ (responseContent) in
-                request.response(responseContent, as: .json)
+                Response(body: responseContent, mediaType: .json)
             })
         }
     }
@@ -21,4 +21,10 @@ extension Router {
 
 enum GraphQLResolveError: Swift.Error {
     case noQueryFound
+}
+
+extension Response {
+    convenience init(body: String, mediaType: HTTPMediaType) {
+        self.init(status: .ok, headers: HTTPHeaders.init([(HTTPHeaders.Name.contentType.description, mediaType.description)]), body: Response.Body(string: body))
+    }
 }

@@ -1,7 +1,11 @@
 import GraphQL
 import Vapor
 
-extension GraphQLError: Debuggable {
+extension GraphQLError: AbortError {
+    public var status: HTTPResponseStatus {
+        return .ok
+    }
+
     public var identifier: String {
         "GraphQLError"
     }

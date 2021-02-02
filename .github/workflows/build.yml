@@ -24,4 +24,4 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - run: apt-get -qq update && apt-get -q -y install libpq-dev libssl-dev zlib1g-dev
-    - run: swift build -c release
+    - run: swift build --enable-test-discovery -c release

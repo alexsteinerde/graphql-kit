@@ -1,15 +1,46 @@
 import XCTest
 import Vapor
+import XCTVapor
 @testable import GraphQLKit
 
 final class GraphQLKitTests: XCTestCase {
-    struct Resolver: FieldKeyProvider {
-        typealias FieldKey = FieldKeys
-
-        enum FieldKeys: String {
-            case test
-            case number
+    struct SomeBearerAuthenticator: BearerAuthenticator {
+        struct User: Authenticatable {}
+        
+        func authenticate(bearer: BearerAuthorization, for request: Request) -> EventLoopFuture<()> {
+            // Bearer token should be equal to `token` to pass the auth
+            if bearer.token == "token" {
+                request.auth.login(User())
+                return request.eventLoop.makeSucceededFuture(())
+            } else {
+                return request.eventLoop.makeFailedFuture(Abort(.unauthorized))
+            }
         }
+        
+        func authenticate(request: Request) -> EventLoopFuture<()> {
+            // Bearer token should be equal to `token` to pass the auth
+            if request.headers.bearerAuthorization?.token == "token" {
+                request.auth.login(User())
+                return request.eventLoop.makeSucceededFuture(())
+            } else {
+                return request.eventLoop.makeFailedFuture(Abort(.unauthorized))
+            }
+        }
+    }
+    
+    struct ProtectedResolver {
+        func test(store: Request, _: NoArguments) throws -> String {
+            _ = try store.auth.require(SomeBearerAuthenticator.User.self)
+            return "Hello World"
+        }
+
+        func number(store: Request, _: NoArguments) throws -> Int {
+            _ = try store.auth.require(SomeBearerAuthenticator.User.self)
+            return 42
+        }
+    }
+    
+    struct Resolver {
         func test(store: Request, _: NoArguments) -> String {
             "Hello World"
         }
@@ -18,98 +49,186 @@ final class GraphQLKitTests: XCTestCase {
             42
         }
     }
+    
+    let protectedSchema = try! Schema<ProtectedResolver, Request> {
+        Query {
+            Field("test", at: ProtectedResolver.test)
+            Field("number", at: ProtectedResolver.number)
+        }
+    }
 
-    let schema = Schema<Resolver, Request>([
-                Query([
-                    Field(.test, at: Resolver.test),
-                    Field(.number, at: Resolver.number)
-                ])
-            ])
-            let query = """
-                query {
-                    test
-                }
-                """
+    let schema = try! Schema<Resolver, Request> {
+        Query {
+            Field("test", at: Resolver.test)
+            Field("number", at: Resolver.number)
+        }
+    }
+    
+    let query = """
+    query {
+        test
+    }
+    """
 
     func testPostEndpoint() throws {
         let queryRequest = QueryRequest(query: query, operationName: nil, variables: nil)
         let data = String(data: try! JSONEncoder().encode(queryRequest), encoding: .utf8)!
 
-        let app = try! Application.testable()
-        try! app.make(Router.self).register(graphQLSchema: schema, withResolver: Resolver())
-        let responder = try! app.make(Responder.self)
-         // 2
-        let request = HTTPRequest(method: .POST, url: URL(string: "/graphql")!, headers: HTTPHeaders([("Content-Type", "application/json")]), body: data)
-         let wrappedRequest = Request(http: request, using: app)
+        let app = Application(.testing)
+        defer { app.shutdown() }
 
-        let response = try! responder.respond(to: wrappedRequest).wait()
-        let status = response.http
+        app.register(graphQLSchema: schema, withResolver: Resolver())
 
-        XCTAssertEqual(status.status, HTTPResponseStatus.ok)
-        XCTAssertEqual(status.body.description, #"{"data":{"test":"Hello World"}}"#)
+        var body = ByteBufferAllocator().buffer(capacity: 0)
+        body.writeString(data)
+        var headers = HTTPHeaders()
+        headers.replaceOrAdd(name: .contentLength, value: body.readableBytes.description)
+        headers.contentType = .json
+
+        try app.testable().test(.POST, "/graphql", headers: headers, body: body) { res in
+            XCTAssertEqual(res.status, .ok)
+            var res = res
+            let expected = #"{"data":{"test":"Hello World"}}"#
+            XCTAssertEqual(res.body.readString(length: expected.count), expected)
+        }
     }
 
     func testGetEndpoint() throws {
-        let app = try! Application.testable()
-        try! app.make(Router.self).register(graphQLSchema: schema, withResolver: Resolver())
-        let responder = try! app.make(Responder.self)
-         // 2
-        let request = HTTPRequest(method: .GET, url: URL(string: "/graphql?query=\(query.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!)")!)
-         let wrappedRequest = Request(http: request, using: app)
+        let app = Application(.testing)
+        defer { app.shutdown() }
 
-        let response = try! responder.respond(to: wrappedRequest).wait()
-        let status = response.http
-
-        XCTAssertEqual(status.status, HTTPResponseStatus.ok)
-        XCTAssertEqual(status.body.description, #"{"data":{"test":"Hello World"}}"#)
+        app.register(graphQLSchema: schema, withResolver: Resolver())
+        try app.testable().test(.GET, "/graphql?query=\(query.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!)") { res in
+            XCTAssertEqual(res.status, .ok)
+            var body = res.body
+            let expected = #"{"data":{"test":"Hello World"}}"#
+            XCTAssertEqual(body.readString(length: expected.count), expected)
+        }
     }
-
+    
     func testPostOperatinName() throws {
         let multiQuery = """
-query World {
-    test
-}
+            query World {
+                test
+            }
 
-query Number {
-    number
-}
-"""
+            query Number {
+                number
+            }
+            """
         let queryRequest = QueryRequest(query: multiQuery, operationName: "Number", variables: nil)
         let data = String(data: try! JSONEncoder().encode(queryRequest), encoding: .utf8)!
 
-        let app = try! Application.testable()
-        try! app.make(Router.self).register(graphQLSchema: schema, withResolver: Resolver())
-        let responder = try! app.make(Responder.self)
-         // 2
-        let request = HTTPRequest(method: .POST, url: URL(string: "/graphql")!, headers: HTTPHeaders([("Content-Type", "application/json")]), body: data)
-         let wrappedRequest = Request(http: request, using: app)
+        let app = Application(.testing)
+        defer { app.shutdown() }
 
-        let response = try! responder.respond(to: wrappedRequest).wait()
-        let status = response.http
+        app.register(graphQLSchema: schema, withResolver: Resolver())
 
-        XCTAssertEqual(status.status, HTTPResponseStatus.ok)
-        XCTAssertEqual(status.body.description, #"{"data":{"number":42}}"#)
+        var body = ByteBufferAllocator().buffer(capacity: 0)
+        body.writeString(data)
+        var headers = HTTPHeaders()
+        headers.replaceOrAdd(name: .contentLength, value: body.readableBytes.description)
+        headers.contentType = .json
+
+        try app.testable().test(.POST, "/graphql", headers: headers, body: body) { res in
+            XCTAssertEqual(res.status, .ok)
+            var res = res
+            let expected = #"{"data":{"number":42}}"#
+            XCTAssertEqual(res.body.readString(length: expected.count), expected)
+        }
     }
+    
+    func testProtectedPostEndpoint() throws {
+        let queryRequest = QueryRequest(query: query, operationName: nil, variables: nil)
+        let data = String(data: try! JSONEncoder().encode(queryRequest), encoding: .utf8)!
 
-    static let allTests = [
-        ("testPostEndpoint", testPostEndpoint),
-        ("testGetEndpoint", testGetEndpoint),
-        ("testPostOperatinName", testPostOperatinName),
-    ]
-}
+        let app = Application(.testing)
+        defer { app.shutdown() }
 
-extension Application {
-  static func testable(envArgs: [String]? = nil) throws -> Application {
-    let config = Config.default()
-    let services = Services.default()
-    var env = Environment.testing
+        let protected = app.grouped(SomeBearerAuthenticator())
+        protected.register(graphQLSchema: protectedSchema, withResolver: ProtectedResolver())
 
-    if let environmentArgs = envArgs {
-      env.arguments = environmentArgs
+        var body = ByteBufferAllocator().buffer(capacity: 0)
+        body.writeString(data)
+        var headers = HTTPHeaders()
+        headers.replaceOrAdd(name: .contentLength, value: body.readableBytes.description)
+        headers.contentType = .json
+        
+        var protectedHeaders = headers
+        protectedHeaders.replaceOrAdd(name: .authorization, value: "Bearer token")
+        
+        try app.testable().test(.POST, "/graphql", headers: headers, body: body) { res in
+            XCTAssertEqual(res.status, .unauthorized)
+        }
+        
+        try app.testable().test(.POST, "/graphql", headers: protectedHeaders, body: body) { res in
+            XCTAssertEqual(res.status, .ok)
+            var res = res
+            let expected = #"{"data":{"test":"Hello World"}}"#
+            XCTAssertEqual(res.body.readString(length: expected.count), expected)
+        }
     }
-    let app = try Application(config: config, environment: env, services: services)
+    
+    func testProtectedGetEndpoint() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        
+        let protected = app.grouped(SomeBearerAuthenticator())
+        protected.register(graphQLSchema: protectedSchema, withResolver: ProtectedResolver())
+        
+        var headers = HTTPHeaders()
+        headers.replaceOrAdd(name: .authorization, value: "Bearer token")
+        
+        try app.testable().test(.GET, "/graphql?query=\(query.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!)") { res in
+            XCTAssertEqual(res.status, .unauthorized)
+        }
+        
+        try app.testable().test(.GET, "/graphql?query=\(query.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!)", headers: headers) { res in
+            XCTAssertEqual(res.status, .ok)
+            var body = res.body
+            let expected = #"{"data":{"test":"Hello World"}}"#
+            XCTAssertEqual(body.readString(length: expected.count), expected)
+        }
+    }
+    
+    func testProtectedPostOperatinName() throws {
+        let multiQuery = """
+            query World {
+                test
+            }
 
+            query Number {
+                number
+            }
+            """
+        let queryRequest = QueryRequest(query: multiQuery, operationName: "Number", variables: nil)
+        let data = String(data: try! JSONEncoder().encode(queryRequest), encoding: .utf8)!
 
-    return app
-  }
+        let app = Application(.testing)
+        defer { app.shutdown() }
+
+        let protected = app.grouped(SomeBearerAuthenticator())
+        protected.register(graphQLSchema: protectedSchema, withResolver: ProtectedResolver())
+
+        var body = ByteBufferAllocator().buffer(capacity: 0)
+        body.writeString(data)
+        
+        var headers = HTTPHeaders()
+        headers.replaceOrAdd(name: .contentLength, value: body.readableBytes.description)
+        headers.contentType = .json
+        
+        var protectedHeaders = headers
+        protectedHeaders.replaceOrAdd(name: .authorization, value: "Bearer token")
+        
+        try app.testable().test(.POST, "/graphql", headers: headers, body: body) { res in
+            XCTAssertEqual(res.status, .unauthorized)
+        }
+
+        try app.testable().test(.POST, "/graphql", headers: protectedHeaders, body: body) { res in
+            XCTAssertEqual(res.status, .ok)
+            var res = res
+            let expected = #"{"data":{"number":42}}"#
+            XCTAssertEqual(res.body.readString(length: expected.count), expected)
+        }
+    }
 }
