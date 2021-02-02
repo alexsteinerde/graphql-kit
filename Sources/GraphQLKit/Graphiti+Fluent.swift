@@ -1,36 +1,29 @@
-//import Graphiti
-//import Vapor
-//import Fluent
-//
-//extension Graphiti.Field where Arguments == NoArguments, Context == Request, ObjectType: Model {
-//    public convenience init<ChildType: Model>(
-//        _ name: FieldKey,
-//        with keyPath: KeyPath<ObjectType, Children<ObjectType, ChildType>>
-//    ) where ChildType.Database == ObjectType.Database, ResolveType == [ChildType], FieldType == [TypeReference<ChildType>] {
-//
-//
-//        let function: AsyncResolve<ObjectType, Context, Arguments, ResolveType> = { type in
-//            return { context, arguments, eventLoop in
-//                return try type[keyPath: keyPath].query(on: context).all()
-//            }
-//        }
-//
-//        self.init(name, at: function, overridingType: FieldType.self)
-//    }
-//}
-//
-//extension Graphiti.Field where Arguments == NoArguments, Context == Request, ObjectType: Model, ResolveType: Model, ObjectType.Database == ResolveType.Database, FieldType == TypeReference<ResolveType> {
-//    public convenience init(
-//        _ name: FieldKey,
-//        with keyPath: KeyPath<ObjectType, Parent<ObjectType, ResolveType>>
-//    ) {
-//
-//        let function: AsyncResolve<ObjectType, Context, Arguments, ResolveType> = { type in
-//            return { context, arguments, eventLoop in
-//                return type[keyPath: keyPath].get(on: context)
-//            }
-//        }
-//
-//        self.init(name, at: function)
-//    }
-//}
+import Graphiti
+import Vapor
+import Fluent
+
+extension Graphiti.Field where Arguments == NoArguments, Context == Request, ObjectType: Model {
+    public convenience init<ChildType: Model>(
+        _ name: FieldKey,
+        with keyPath: KeyPath<ObjectType, ChildrenProperty<ObjectType, ChildType>>
+    ) where FieldType == [TypeReference<ChildType>] {
+        self.init(name.description, at: { (type) -> (Request, NoArguments, EventLoopGroup) throws -> EventLoopFuture<[ChildType]> in
+            return { (context: Request, arguments: NoArguments, eventLoop: EventLoopGroup) in
+                return type[keyPath: keyPath].query(on: context.db).all()
+            }
+        }, as: [TypeReference<ChildType>].self)
+    }
+}
+
+extension Graphiti.Field where Arguments == NoArguments, Context == Request, ObjectType: Model {
+    public convenience init<ParentType: Model>(
+        _ name: FieldKey,
+        with keyPath: KeyPath<ObjectType, ParentProperty<ObjectType, ParentType>>
+    ) where FieldType == TypeReference<ParentType>{
+        self.init(name.description, at: { (type) -> (Request, NoArguments, EventLoopGroup) throws -> EventLoopFuture<ParentType> in
+            return { (context: Request, arguments: NoArguments, eventLoop: EventLoopGroup) in
+                return type[keyPath: keyPath].get(on: context.db)
+            }
+        }, as: TypeReference<ParentType>.self)
+    }
+}

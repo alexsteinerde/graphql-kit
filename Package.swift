@@ -15,10 +15,10 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/GraphQLSwift/Graphiti.git", from: "0.22.0"),
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
-//        .package(url: "https://github.com/vapor/fluent.git", from: "4.0.0-beta"),
+        .package(url: "https://github.com/vapor/fluent.git", from: "4.0.0"),
     ],
     targets: [
-        .target(name: "GraphQLKit", dependencies: ["Vapor", "Graphiti"]),
+        .target(name: "GraphQLKit", dependencies: ["Vapor", "Graphiti", "Fluent"]),
         .testTarget(name: "GraphQLKitTests",dependencies: ["GraphQLKit", "XCTVapor"]),
     ]
 )
