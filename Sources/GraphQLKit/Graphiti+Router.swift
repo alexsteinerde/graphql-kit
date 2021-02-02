@@ -3,7 +3,7 @@ import Graphiti
 import GraphQL
 
 extension RoutesBuilder {
-    public func register<RootType: FieldKeyProvider>(graphQLSchema schema: Schema<RootType, Request>, withResolver rootAPI: RootType, at path: PathComponent="graphql") {
+    public func register<RootType>(graphQLSchema schema: Schema<RootType, Request>, withResolver rootAPI: RootType, at path: PathComponent="graphql") {
         self.post(path) { (request) -> EventLoopFuture<Response> in
             try request.resolveByBody(graphQLSchema: schema, with: rootAPI)
                 .map({ (responseContent) in

@@ -2,13 +2,13 @@ import Vapor
 import Graphiti
 
 extension Request {
-    func resolveByBody<RootType: FieldKeyProvider>(graphQLSchema schema: Schema<RootType, Request>, with rootAPI: RootType) throws -> Future<String> {
+    func resolveByBody<RootType>(graphQLSchema schema: Schema<RootType, Request>, with rootAPI: RootType) throws -> Future<String> {
         let queryRequest = try self.content
             .decode(QueryRequest.self)
         return self.resolve(byQueryRequest: queryRequest, graphQLSchema: schema, with: rootAPI)
     }
 
-    func resolveByQueryParameters<RootType: FieldKeyProvider>(graphQLSchema schema: Schema<RootType, Request>, with rootAPI: RootType) throws -> Future<String> {
+    func resolveByQueryParameters<RootType>(graphQLSchema schema: Schema<RootType, Request>, with rootAPI: RootType) throws -> Future<String> {
         guard let queryString = self.query[String.self, at: "query"] else { throw GraphQLError(GraphQLResolveError.noQueryFound) }
         let variables = self.query[String.self, at: "variables"].flatMap {
             $0.data(using: .utf8).flatMap { (data) -> [String: Map]? in
@@ -25,10 +25,10 @@ extension Request {
         return resolve(byQueryRequest: data, graphQLSchema: schema, with: rootAPI)
     }
 
-    private func resolve<RootType: FieldKeyProvider>(byQueryRequest data: QueryRequest, graphQLSchema schema: Schema<RootType, Request>, with rootAPI: RootType) -> Future<String> {
+    private func resolve<RootType>(byQueryRequest data: QueryRequest, graphQLSchema schema: Schema<RootType, Request>, with rootAPI: RootType) -> Future<String> {
         schema.execute(
             request: data.query,
-            root: rootAPI,
+            resolver: rootAPI,
             context: self,
             eventLoopGroup: self.eventLoop,
             variables: data.variables ?? [:],
