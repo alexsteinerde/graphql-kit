@@ -4,7 +4,7 @@
 [![build](https://github.com/alexsteinerde/graphql-kit/workflows/build/badge.svg)](https://github.com/alexsteinerde/graphql-kit/actions)
 
 
-Easy setup of a GraphQL server with Vapor. It uses the GraphQL implementation of [Graphiti](https://github.com/alexsteinerde/Graphiti).
+Easy setup of a GraphQL server with Vapor. It uses the GraphQL implementation of [Graphiti](https://github.com/GraphQLSwift/Graphiti).
 
 ## Features
 - [x] Arguments, operation name and query support
@@ -21,7 +21,7 @@ import PackageDescription
 
 let package = Package(
     dependencies: [
-    .package(url: "https://github.com/alexsteinerde/graphql-kit.git", from: "1.0.0"),
+    .package(url: "https://github.com/alexsteinerde/graphql-kit.git", from: "2.0.0"),
     ],
     targets: [
     .target(name: "App", dependencies: ["GraphQLKit"]),
@@ -33,7 +33,7 @@ let package = Package(
 ## Getting Started
 ### Define your schema
 This package is setup to accept only `Request` objects as the context object for the schema. This gives the opportunity to access all functionality that Vapor provides, for example authentication, service management and database access. To see an example implementation please have a look at the [`vapor-graphql-template`](https://github.com/alexsteinerde/vapor-graphql-template) repository.
-This package only provides the needed functions to register an existing GraphQL schema on a Vapor application. To define your schema please refer to the [Graphiti](https://github.com/alexsteinerde/Graphiti) documentations.
+This package only provides the needed functions to register an existing GraphQL schema on a Vapor application. To define your schema please refer to the [Graphiti](https://github.com/GraphQLSwift/Graphiti) documentations.
 But by including this package some other helper functions are exposed:
 
 #### Async Resolver
@@ -64,7 +64,7 @@ Enum(TodoState.self),
 ```
 
 #### `Parent` and `Children`
-Vapor has the functionality to fetch an objects parent and children automatically with `Parent` and `Children` types. To integrate this into GraphQL, GraphQLKit provides extensions to the `Field` type that lets you use the parent or children property as a keypath. The fetching of those related objects is then done automatically.
+Vapor has the functionality to fetch an objects parent and children automatically with `@Parent` and @`Children` types. To integrate this into GraphQL, GraphQLKit provides extensions to the `Field` type that lets you use the parent or children property as a keypath. The fetching of those related objects is then done automatically.
 
 > :warning: Loading related objects in GraphQL has the [**N+1** problem](https://itnext.io/what-is-the-n-1-problem-in-graphql-dd4921cb3c1a). A solution would be to build a DataLoader package for Swift. But this hasn't been done yet.
 
@@ -72,9 +72,7 @@ Vapor has the functionality to fetch an objects parent and children automaticall
 final class User {
     ...
     var userId: UUID
-    var user: Parent<Post, User> {
-        parent(\.userId)
-    }
+    @Parent(key: "userId") var user: User
     ...
 }
 ```
