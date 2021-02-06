@@ -6,7 +6,7 @@ extension Enum where EnumType: CaseIterable & Encodable & RawRepresentable {
         _ type: EnumType.Type,
         name: String? = nil
     ) {
-        self.init(type) { () -> [Value<EnumType>] in
+        self.init(type) { () -> [Graphiti.Value<EnumType>] in
             return EnumType.allCases.map({ Value($0) })
         }
     }
