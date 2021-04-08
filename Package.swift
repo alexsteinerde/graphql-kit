@@ -1,4 +1,4 @@
-// swift-tools-version:5.1
+// swift-tools-version:5.2
 
 import PackageDescription
 
@@ -18,7 +18,18 @@ let package = Package(
         .package(url: "https://github.com/vapor/fluent.git", from: "4.0.0"),
     ],
     targets: [
-        .target(name: "GraphQLKit", dependencies: ["Vapor", "Graphiti", "Fluent"]),
-        .testTarget(name: "GraphQLKitTests",dependencies: ["GraphQLKit", "XCTVapor"]),
+        .target(name: "GraphQLKit",
+                dependencies: [
+                    .product(name: "Vapor", package: "vapor"),
+                    .product(name: "Graphiti", package: "Graphiti"),
+                    .product(name: "Fluent", package: "fluent")
+                ]
+        ),
+        .testTarget(name: "GraphQLKitTests",
+                    dependencies: [
+                        .target(name: "GraphQLKit"),
+                        .product(name: "XCTVapor", package: "vapor")
+                    ]
+        ),
     ]
 )
