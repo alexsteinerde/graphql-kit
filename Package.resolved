@@ -29,15 +29,6 @@
         }
       },
       {
-        "package": "CRuntime",
-        "repositoryURL": "https://github.com/wickwirew/CRuntime.git",
-        "state": {
-          "branch": null,
-          "revision": "95f911318d8c885f6fc05e971471f94adfd39405",
-          "version": "2.1.2"
-        }
-      },
-      {
         "package": "fluent",
         "repositoryURL": "https://github.com/vapor/fluent.git",
         "state": {
@@ -60,8 +51,8 @@
         "repositoryURL": "https://github.com/GraphQLSwift/Graphiti.git",
         "state": {
           "branch": null,
-          "revision": "076140e3ab0ceddfc9ffaab74b68ccdfac84821c",
-          "version": "0.22.0"
+          "revision": "af903a243862c6427935677b91f67df0c21f2a71",
+          "version": "0.26.0"
         }
       },
       {
@@ -69,8 +60,8 @@
         "repositoryURL": "https://github.com/GraphQLSwift/GraphQL.git",
         "state": {
           "branch": null,
-          "revision": "69f2cd4835ff60b5fae841a680abdc1d56592dd4",
-          "version": "1.1.7"
+          "revision": "e5de315125f8220334ba3799bbd78c7c1ed529f7",
+          "version": "2.0.0"
         }
       },
       {
@@ -92,21 +83,12 @@
         }
       },
       {
-        "package": "Runtime",
-        "repositoryURL": "https://github.com/wickwirew/Runtime.git",
-        "state": {
-          "branch": null,
-          "revision": "61c9776f47d2951bdc562486ad348e5e1ca2e180",
-          "version": "2.1.1"
-        }
-      },
-      {
         "package": "sql-kit",
         "repositoryURL": "https://github.com/vapor/sql-kit.git",
         "state": {
           "branch": null,
-          "revision": "ea9928b7f4a801b175a00b982034d9c54ecb6167",
-          "version": "3.7.0"
+          "revision": "3453fd7573b3c1c666d5db38788163308a696193",
+          "version": "3.7.1"
         }
       },
       {
@@ -116,6 +98,15 @@
           "branch": null,
           "revision": "f2fd8c4845a123419c348e0bc4b3839c414077d5",
           "version": "1.2.0"
+        }
+      },
+      {
+        "package": "swift-collections",
+        "repositoryURL": "https://github.com/apple/swift-collections",
+        "state": {
+          "branch": null,
+          "revision": "3426dba9ee5c9f8e4981b0fc9d39a818d36eec28",
+          "version": "0.0.4"
         }
       },
       {
