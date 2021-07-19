@@ -63,23 +63,44 @@ enum TodoState: String, CaseIterable {
 Enum(TodoState.self),
 ```
 
-#### `Parent` and `Children`
-Vapor has the functionality to fetch an objects parent and children automatically with `@Parent` and @`Children` types. To integrate this into GraphQL, GraphQLKit provides extensions to the `Field` type that lets you use the parent or children property as a keypath. The fetching of those related objects is then done automatically.
+#### `Parent`,  `Children` and `Siblings`
+Vapor has the functionality to fetch an objects parent, children or siblings automatically with `@Parent`, `@Children` and `@Siblings` types. To integrate this into GraphQL, GraphQLKit provides extensions to the `Field` type that lets you use the parent, children or siblings property as a keypath. Fetching of those related objects is then done automatically.
 
 > :warning: Loading related objects in GraphQL has the [**N+1** problem](https://itnext.io/what-is-the-n-1-problem-in-graphql-dd4921cb3c1a). A solution would be to build a DataLoader package for Swift. But this hasn't been done yet.
 
 ```swift
-final class User {
+final class User: Model {
     ...
-    var userId: UUID
-    @Parent(key: "userId") var user: User
+    
+    @Children(for: \.$user)
+    var todos: [Todo]
+    
+    ...
+}
+
+final class Todo: Model {
+    ...
+    
+    @Parent(key: "user_id")
+    var user: User
+    
+    @Siblings(through: TodoTag.self, from: \.$todo, to: \.$tag)
+    public var tags: [Tag]
+    
     ...
 }
 ```
 
 ```swift
-// Schema type: 
-Field(.user, with: \.user),
+// Schema types
+Type(User.self) {
+    Field("todos", with: \.$todos)
+}
+
+Type(Todo.self) {
+    Field("user", with: \.$user)
+    Field("tags", with: \.$tags)
+}
 ```
 
 ### Register the schema on the application
