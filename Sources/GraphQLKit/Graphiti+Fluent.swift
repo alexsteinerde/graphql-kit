@@ -77,3 +77,22 @@ extension Graphiti.Field where Arguments == NoArguments, Context == Request, Obj
         }, as: TypeReference<ParentType>?.self)
     }
 }
+
+// OptionalChild Relationship
+extension Graphiti.Field where Arguments == NoArguments, Context == Request, ObjectType: Model {
+    
+    /// Creates a GraphQL field for an optional one-to-many/one-to-one relationship for Fluent
+    /// - Parameters:
+    ///   - name: Field name
+    ///   - keyPath: KeyPath to the @OptionalParent property
+    public convenience init<ParentType: Model>(
+        _ name: FieldKey,
+        with keyPath: KeyPath<ObjectType, OptionalChildProperty<ObjectType, ParentType>>
+    ) where FieldType == TypeReference<ParentType>? {
+        self.init(name.description, at: { (type) -> (Request, NoArguments, EventLoopGroup) throws -> EventLoopFuture<Optional<ParentType>> in
+            return { (context: Request, arguments: NoArguments, eventLoop: EventLoopGroup) throws -> EventLoopFuture<Optional<ParentType>> in
+                return type[keyPath: keyPath].get(on: context.db)  // Get the desired property and make the Fluent database query on it.
+            }
+        }, as: TypeReference<ParentType>?.self)
+    }
+}
