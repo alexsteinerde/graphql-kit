@@ -22,7 +22,7 @@ extension RoutesBuilder {
 extension GraphQLResult {
     fileprivate func httpResponseStatus() -> HTTPStatus {
         if let error = self.errors.first?.originalError as? GraphQLHTTPStatusError {
-            return error.statusCode
+            return error.status
         } else {
             return .ok
         }
@@ -36,5 +36,5 @@ enum GraphQLResolveError: Swift.Error {
 extension GraphQLResult: Content { }
 
 public protocol GraphQLHTTPStatusError: Swift.Error {
-    var statusCode: HTTPStatus { get }
+    var status: HTTPStatus { get }
 }
