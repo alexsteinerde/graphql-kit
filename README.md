@@ -108,7 +108,11 @@ In your `configure.swift` file call the `register(graphQLSchema: Schema<YourReso
 
 ```Swift
 // Register the schema and it's resolver.
-app.register(graphQLSchema: todoSchema, withResolver: TodoAPI())
+app.register(
+  graphQLSchema: todoSchema,
+  withResolver: TodoAPI(),
+  customEncoder: GraphQLJSONEncoder()
+)
 ```
 
 ## License
