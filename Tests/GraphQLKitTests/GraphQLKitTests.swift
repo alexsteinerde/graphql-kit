@@ -231,4 +231,44 @@ final class GraphQLKitTests: XCTestCase {
             XCTAssertEqual(res.body.readString(length: expected.count), expected)
         }
     }
+    
+    func testEnum() throws {
+        enum TodoState: String, Codable, CaseIterable {
+            case open
+            case done
+            case forLater
+        }
+        
+        class TestResolver {
+            init() {}
+            func test(store: Request, _: NoArguments) -> TodoState {
+                .open
+            }
+        }
+        
+      
+        let schema = try Schema<TestResolver, Request> {
+            Enum(TodoState.self)
+            Query {
+                Field("test", at: TestResolver.test)
+            }
+        }
+        
+        let query = """
+            query {
+                test
+            }
+            """
+        
+        let app = Application(.testing)
+        defer { app.shutdown() }
+
+        app.register(graphQLSchema: schema, withResolver: TestResolver())
+        try app.testable().test(.GET, "/graphql?query=\(query.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!)") { res in
+            XCTAssertEqual(res.status, .ok)
+            var body = res.body
+            let expected = #"{"data":{"test":"open"}}"#
+            XCTAssertEqual(body.readString(length: expected.count), expected)
+        }
+    }
 }

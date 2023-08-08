@@ -54,7 +54,7 @@ func getAllTodos(store: Request, arguments: NoArguments) throws -> EventLoopFutu
 #### Enums
 It automatically resolves all cases of an enum if the type conforms to `CaseIterable`. 
 ```swift
-enum TodoState: String, CaseIterable {
+enum TodoState: String, Codable, CaseIterable {
     case open
     case done
     case forLater
