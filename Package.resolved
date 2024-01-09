@@ -42,8 +42,8 @@
         "repositoryURL": "https://github.com/vapor/fluent-kit.git",
         "state": {
           "branch": null,
-          "revision": "2d7dce5cb04156eecdb17e7349f4eac4206e8a17",
-          "version": "1.42.4"
+          "revision": "e562a1015a814d42582cbccd3e58f03187d6718c",
+          "version": "1.44.0"
         }
       },
       {
@@ -51,8 +51,8 @@
         "repositoryURL": "https://github.com/GraphQLSwift/Graphiti.git",
         "state": {
           "branch": null,
-          "revision": "f80bd1342e52b9ee9e19f7f017dc4545e6c3cb6d",
-          "version": "1.10.1"
+          "revision": "daa556a21b4efae97867eac3f5e4c730f181332a",
+          "version": "1.11.0"
         }
       },
       {
@@ -87,8 +87,8 @@
         "repositoryURL": "https://github.com/vapor/sql-kit.git",
         "state": {
           "branch": null,
-          "revision": "5026e7c0f2e464ea1af9f5948701aa8922ab14eb",
-          "version": "3.27.0"
+          "revision": "b2f128cb62a3abfbb1e3b2893ff3ee69e70f4f0f",
+          "version": "3.28.0"
         }
       },
       {
@@ -132,8 +132,8 @@
         "repositoryURL": "https://github.com/apple/swift-crypto.git",
         "state": {
           "branch": null,
-          "revision": "33a20e650c33f6d72d822d558333f2085effa3dc",
-          "version": "2.5.0"
+          "revision": "60f13f60c4d093691934dc6cfdf5f508ada1f894",
+          "version": "2.6.0"
         }
       },
       {
@@ -159,8 +159,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "324bc65a28323660fad8a36a7a37f0c2c78eeb9a",
-          "version": "2.55.0"
+          "revision": "a2e487b77f17edbce9a65f2b7415f2f479dc8e48",
+          "version": "2.57.0"
         }
       },
       {
@@ -213,8 +213,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "1baf62327cc55f55a0767c3a9414dec8ebfdff96",
-          "version": "4.77.1"
+          "revision": "6b96684e150d3b3afcd53df12fe66e6bd9b67a04",
+          "version": "4.78.0"
         }
       },
       {
