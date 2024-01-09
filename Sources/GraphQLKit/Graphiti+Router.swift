@@ -23,4 +23,16 @@ enum GraphQLResolveError: Swift.Error {
     case noQueryFound
 }
 
-extension GraphQLResult: Content { }
+extension GraphQLResult: Content {
+    public func encodeResponse(for request: Request) -> EventLoopFuture<Response> {
+        return request.eventLoop.submit {
+            Response(
+                status: .ok,
+                headers: [
+                    "Content-Type": "application/json"
+                ],
+                body: .init(data: try GraphQLJSONEncoder().encode(self))
+            )
+        }
+    }
+}
