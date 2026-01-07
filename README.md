@@ -1,12 +1,13 @@
 # GraphQLKit
-[![Language](https://img.shields.io/badge/Swift-5.2-brightgreen.svg)](http://swift.org)
+
+[![Language](https://img.shields.io/badge/Swift-6.0-brightgreen.svg)](http://swift.org)
 [![Vapor Version](https://img.shields.io/badge/Vapor-4-F6CBCA.svg)](http://vapor.codes)
 [![build](https://github.com/alexsteinerde/graphql-kit/workflows/build/badge.svg)](https://github.com/alexsteinerde/graphql-kit/actions)
-
 
 Easy setup of a GraphQL server with Vapor. It uses the GraphQL implementation of [Graphiti](https://github.com/GraphQLSwift/Graphiti).
 
 ## Features
+
 - [x] Arguments, operation name and query support
 - [x] Normal access to the `Request` object as in normal Vapor request handlers
 - [x] Accept JSON in the body of a POST request as the GraphQL query
@@ -16,6 +17,7 @@ Easy setup of a GraphQL server with Vapor. It uses the GraphQL implementation of
 - [ ] Multi-Resolver support
 
 ## Installation
+
 ```Swift
 import PackageDescription
 
@@ -31,28 +33,27 @@ let package = Package(
 ```
 
 ## Getting Started
+
 ### Define your schema
+
 This package is setup to accept only `Request` objects as the context object for the schema. This gives the opportunity to access all functionality that Vapor provides, for example authentication, service management and database access. To see an example implementation please have a look at the [`vapor-graphql-template`](https://github.com/alexsteinerde/vapor-graphql-template) repository.
 This package only provides the needed functions to register an existing GraphQL schema on a Vapor application. To define your schema please refer to the [Graphiti](https://github.com/GraphQLSwift/Graphiti) documentations.
 But by including this package some other helper functions are exposed:
 
 #### Async Resolver
-An `EventLoopGroup` parameter is no longer required for async resolvers as the `Request` context object already provides access to it's `EventLoopGroup` attribute `eventLoop`.
+
+Asynchronously resolve any requests using async/await
 
 ```Swift
-// Instead of adding an unnecessary parameter
-func getAllTodos(store: Request, arguments: NoArguments, _: EventLoopGroup) throws -> EventLoopFuture<[Todo]> {
-    Todo.query(on: store).all()
-}
-
-// You don't need to provide the eventLoopGroup parameter even when resolving a future.
-func getAllTodos(store: Request, arguments: NoArguments) throws -> EventLoopFuture<[Todo]> {
-    Todo.query(on: store).all()
+func getAllTodos(store: Request, arguments: NoArguments) async throws -> [Todo] {
+    try await Todo.query(on: store).all()
 }
 ```
 
 #### Enums
-It automatically resolves all cases of an enum if the type conforms to `CaseIterable`. 
+
+It automatically resolves all cases of an enum if the type conforms to `CaseIterable`.
+
 ```swift
 enum TodoState: String, Codable, CaseIterable {
     case open
@@ -63,7 +64,8 @@ enum TodoState: String, Codable, CaseIterable {
 Enum(TodoState.self),
 ```
 
-#### `Parent`,  `Children` and `Siblings`
+#### `Parent`, `Children` and `Siblings`
+
 Vapor has the functionality to fetch an objects parent, children or siblings automatically with `@Parent`, `@Children` and `@Siblings` types. To integrate this into GraphQL, GraphQLKit provides extensions to the `Field` type that lets you use the parent, children or siblings property as a keypath. Fetching of those related objects is then done automatically.
 
 > :warning: Loading related objects in GraphQL has the [**N+1** problem](https://itnext.io/what-is-the-n-1-problem-in-graphql-dd4921cb3c1a). A solution would be to build a DataLoader package for Swift. But this hasn't been done yet.
@@ -71,22 +73,22 @@ Vapor has the functionality to fetch an objects parent, children or siblings aut
 ```swift
 final class User: Model {
     ...
-    
+
     @Children(for: \.$user)
     var todos: [Todo]
-    
+
     ...
 }
 
 final class Todo: Model {
     ...
-    
+
     @Parent(key: "user_id")
     var user: User
-    
+
     @Siblings(through: TodoTag.self, from: \.$todo, to: \.$tag)
     public var tags: [Tag]
-    
+
     ...
 }
 ```
@@ -104,6 +106,7 @@ Type(Todo.self) {
 ```
 
 ### Register the schema on the application
+
 In your `configure.swift` file call the `register(graphQLSchema: Schema<YourResolver, Request>, withResolver: YourResolver)` on your `Application` instance. By default this registers the GET and POST endpoints at `/graphql`. But you can also pass the optional parameter `at:` and override the default value.
 
 ```Swift
@@ -112,7 +115,9 @@ app.register(graphQLSchema: todoSchema, withResolver: TodoAPI())
 ```
 
 ## License
+
 This project is released under the MIT license. See [LICENSE](LICENSE) for details.
 
 ## Contribution
+
 You can contribute to this project by submitting a detailed issue or by forking this project and sending a pull request. Contributions of any kind are very welcome :)

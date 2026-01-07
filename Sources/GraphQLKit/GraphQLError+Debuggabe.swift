@@ -1,7 +1,7 @@
 import GraphQL
 import Vapor
 
-extension GraphQLError: AbortError {
+extension GraphQLError: @retroactive AbortError {
     public var status: HTTPResponseStatus {
         return .ok
     }
